@@ -1,0 +1,8 @@
+lab_number   = "iac-test-01"
+company      = "lumon"
+department   = "mdr"
+cost_center  = "52321"
+app_name     = "web"
+environment  = "dev"
+machine_type = "e2-medium"
+gcp_project  = "finance-application-01-dev"
