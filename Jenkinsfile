@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'agent' }
+    agent { label 'ssh-agent' }
     
     environment {
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-terraform-sa')
