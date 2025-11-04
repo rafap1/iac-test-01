@@ -46,7 +46,8 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 sh 'terraform plan -out=tfplan'
-                archiveArtifacts artifacts: 'tfplan', fingerprint: true
+                sh 'terraform show -no-color tfplan > tfplan.txt'
+                archiveArtifacts artifacts: 'tfplan,tfplan.txt', fingerprint: true
             }
         }
         stage('Approve Apply') {
