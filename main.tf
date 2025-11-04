@@ -10,7 +10,4 @@ resource "google_compute_instance" "web_vm" {
   network_interface {
     network = "default"
   }
-  labels = {
-    test-label : "test value from rafa"
-  }
 }
