@@ -9,7 +9,6 @@ pipeline {
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-terraform-sa')
         TF_IN_AUTOMATION = 'true'
         TENV_AUTO_INSTALL = 'true'
-        APPLY_APPROVED = 'false'
     }
     
     stages {
@@ -50,49 +49,11 @@ pipeline {
                 archiveArtifacts artifacts: 'tfplan,tfplan.txt', fingerprint: true
             }
         }
-        stage('Approve Apply') {
-            steps {
-                script {
-                    try {
-                        timeout(time: 5, unit: 'MINUTES') {
-                            input message: 'Apply Terraform changes?', ok: 'Apply'
-                        }
-                        env.APPLY_APPROVED = 'true'
-                        echo "Apply approved by user"
-                    } catch (Exception e) {
-                        env.APPLY_APPROVED = 'false'
-                        echo "Apply not approved (timeout or abort): ${e.getMessage()}"
-                    }
-                }
-            }
-        }
-        
         stage('Terraform Apply') {
             steps {
-                script {
-                    if (env.APPLY_APPROVED == 'true') {
-                        echo "Applying Terraform changes..."
-                        sh 'terraform apply tfplan'
-                    } else {
-                        echo "Apply skipped - not approved"
-                    }
-                }
+                sh 'terraform apply tfplan'
             }
-        }
-        
-        stage('Cleanup') {
-            steps {
-                script {
-                    if (env.APPLY_APPROVED == 'false') {
-                        echo 'Apply was skipped - performing cleanup'
-                        sh 'rm -f tfplan'
-                        echo 'Plan file removed, no changes applied'
-                    } else {
-                        echo 'Apply completed - keeping artifacts'
-                    }
-                }
-            }
-        }
+        }        
     }
     
     post {
