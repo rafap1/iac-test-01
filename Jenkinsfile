@@ -51,8 +51,9 @@ pipeline {
         
         stage('Approve Apply') {
             steps {
-                input message: 'Apply Terraform changes?', ok: 'Apply',
-                      submitterParameter: 'APPROVER'
+                timeout(time: 2, unit: 'MINUTES') {
+                input(message: 'Do you want to apply Terraform changes?', ok: 'Proceed')
+                }
             }
         }
         
@@ -68,4 +69,14 @@ pipeline {
             cleanWs()
         }
     }
+}
+
+
+
+stage('Terraform Apply Approval') {
+  steps {
+    timeout(time: 1, unit: 'MINUTES') {
+      input(message: 'Do you want to apply Terraform changes?', ok: 'Proceed')
+    }
+  }
 }
