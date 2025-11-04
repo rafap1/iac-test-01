@@ -70,7 +70,10 @@ pipeline {
         
         stage('Terraform Apply') {
             when {
-                expression { env.APPLY_APPROVED == 'true' }
+                expression { 
+                    echo "DEBUG: APPLY_APPROVED = ${env.APPLY_APPROVED}"
+                    return env.APPLY_APPROVED == 'true' 
+                }
             }
             steps {
                 sh 'terraform apply tfplan'
@@ -79,7 +82,10 @@ pipeline {
         
         stage('Cleanup on Skip') {
             when {
-                expression { env.APPLY_APPROVED == 'false' }
+                expression { 
+                    echo "DEBUG: APPLY_APPROVED = ${env.APPLY_APPROVED}"
+                    return env.APPLY_APPROVED == 'false' 
+                }
             }
             steps {
                 echo 'Apply was skipped - performing cleanup'
