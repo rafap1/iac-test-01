@@ -48,6 +48,19 @@ pipeline {
                 archiveArtifacts artifacts: 'tfplan', fingerprint: true
             }
         }
+        
+        stage('Approve Apply') {
+            steps {
+                input message: 'Apply Terraform changes?', ok: 'Apply',
+                      submitterParameter: 'APPROVER'
+            }
+        }
+        
+        stage('Terraform Apply') {
+            steps {
+                sh 'terraform apply tfplan'
+            }
+        }
     }
     
     post {
