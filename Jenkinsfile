@@ -55,11 +55,10 @@ pipeline {
                 script {
                     try {
                         timeout(time: 5, unit: 'MINUTES') {
-                            input message: 'Apply Terraform changes?', ok: 'Apply',
-                                  submitterParameter: 'APPROVER'
+                            input message: 'Apply Terraform changes?', ok: 'Apply'
                         }
                         env.APPLY_APPROVED = 'true'
-                        echo "Apply approved by: ${env.APPROVER}"
+                        echo "Apply approved by user"
                     } catch (Exception e) {
                         env.APPLY_APPROVED = 'false'
                         echo "Apply not approved (timeout or abort): ${e.getMessage()}"
@@ -69,28 +68,29 @@ pipeline {
         }
         
         stage('Terraform Apply') {
-            when {
-                expression { 
-                    echo "DEBUG: APPLY_APPROVED = ${env.APPLY_APPROVED}"
-                    return env.APPLY_APPROVED == 'true' 
-                }
-            }
             steps {
-                sh 'terraform apply tfplan'
+                script {
+                    if (env.APPLY_APPROVED == 'true') {
+                        echo "Applying Terraform changes..."
+                        sh 'terraform apply tfplan'
+                    } else {
+                        echo "Apply skipped - not approved"
+                    }
+                }
             }
         }
         
-        stage('Cleanup on Skip') {
-            when {
-                expression { 
-                    echo "DEBUG: APPLY_APPROVED = ${env.APPLY_APPROVED}"
-                    return env.APPLY_APPROVED == 'false' 
-                }
-            }
+        stage('Cleanup') {
             steps {
-                echo 'Apply was skipped - performing cleanup'
-                sh 'rm -f tfplan'
-                echo 'Plan file removed, no changes applied'
+                script {
+                    if (env.APPLY_APPROVED == 'false') {
+                        echo 'Apply was skipped - performing cleanup'
+                        sh 'rm -f tfplan'
+                        echo 'Plan file removed, no changes applied'
+                    } else {
+                        echo 'Apply completed - keeping artifacts'
+                    }
+                }
             }
         }
     }
