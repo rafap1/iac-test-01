@@ -9,6 +9,7 @@ pipeline {
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-terraform-sa')
         TF_IN_AUTOMATION = 'true'
         TENV_AUTO_INSTALL = 'true'
+        APPLY_APPROVED = 'false'
     }
     
     stages {
@@ -48,18 +49,41 @@ pipeline {
                 archiveArtifacts artifacts: 'tfplan', fingerprint: true
             }
         }
-        
         stage('Approve Apply') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                input(message: 'Do you want to apply Terraform changes?', ok: 'Proceed')
+                script {
+                    try {
+                        timeout(time: 5, unit: 'MINUTES') {
+                            input message: 'Apply Terraform changes?', ok: 'Apply',
+                                  submitterParameter: 'APPROVER'
+                        }
+                        env.APPLY_APPROVED = 'true'
+                        echo "Apply approved by: ${env.APPROVER}"
+                    } catch (Exception e) {
+                        env.APPLY_APPROVED = 'false'
+                        echo "Apply not approved (timeout or abort): ${e.getMessage()}"
+                    }
                 }
             }
         }
         
         stage('Terraform Apply') {
+            when {
+                expression { env.APPLY_APPROVED == 'true' }
+            }
             steps {
                 sh 'terraform apply tfplan'
+            }
+        }
+        
+        stage('Cleanup on Skip') {
+            when {
+                expression { env.APPLY_APPROVED == 'false' }
+            }
+            steps {
+                echo 'Apply was skipped - performing cleanup'
+                sh 'rm -f tfplan'
+                echo 'Plan file removed, no changes applied'
             }
         }
     }
@@ -69,14 +93,4 @@ pipeline {
             cleanWs()
         }
     }
-}
-
-
-
-stage('Terraform Apply Approval') {
-  steps {
-    timeout(time: 1, unit: 'MINUTES') {
-      input(message: 'Do you want to apply Terraform changes?', ok: 'Proceed')
-    }
-  }
 }
