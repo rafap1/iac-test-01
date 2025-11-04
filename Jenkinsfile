@@ -50,37 +50,32 @@ pipeline {
             }
         }
         stage('Approve Apply') {
-        steps {
-            script {
-                try {
-                    input message: 'Approve to apply Terraform plan?', submitter: 'rafap1'
-                    env.APPROVED = 'true'
-                } catch (err) {
-                    echo "Apply not approved, continuing to cleanup."
-                    env.APPROVED = 'false'
+            steps {
+                script {
+                    try {
+                        input message: 'Approve to apply Terraform plan?', submitter: 'rafap1'
+                        env.APPROVED = 'true'
+                    } catch (err) {
+                        echo "Apply not approved, continuing to cleanup."
+                        env.APPROVED = 'false'
+                    }
                 }
             }
         }
         stage('Terraform Apply') {
-        when {
-            expression { env.APPROVED == 'true' }
-        }
-        steps {
-            sh 'terraform apply -auto-approve tfplan'
-        }
+            when {
+                expression { env.APPROVED == 'true' }
+            }
+            steps {
+                sh 'terraform apply -auto-approve tfplan'
+            }
         }
 
-    stage('Cleanup') {
-      steps {
-        echo "Running cleanup, always executes regardless of approval."
-        sh 'terraform workspace list || true'
-      }
-    }   
-    }
-    
-    post {
-        always {
-            cleanWs()
+        stage('Cleanup') {
+        steps {
+            echo "Running cleanup, always executes regardless of approval."
+            sh 'terraform workspace list || true'
         }
-    }
+        }
+    }   
 }
