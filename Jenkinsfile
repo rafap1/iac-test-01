@@ -77,5 +77,11 @@ pipeline {
             sh 'terraform workspace list || true'
         }
         }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
     }   
 }
